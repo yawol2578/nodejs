@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Center</title>
+    <style>
+        /* 부모 요소를 flex 컨테이너로 설정 */
+        #container1 {
+            display: flex;
+            justify-content: center;  /* 가로 중앙 정렬 */
+            align-items: center;      /* 세로 중앙 정렬 */
+            margin: 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 버튼을 감싸는 div -->
+    <div id="container1">
+        <button>버튼</button>
+    </div>
+
+    <script>
+
+        let a = 123;
+        let b = 200;
+        let c = 'hello';
+        let d = [1, 2, 3];
+        let e = {"name":"엄준식", "age":6900}
+
+        if (a > b){
+            alert(`${b}보다 크다`);
+        }else if (a < b){
+            alert(`${a}보다 크다`);
+        }else{
+            alert("값이 똑같다다");
+        }
+
+        const multiply = (a,b) => a*b;
+
+        function multiply_b(a,b){
+            return a*b;
+        }
+
+        let people = ["길동홍", "종세왕대"];
+
+        people.forEach(function(person){
+            console.log(`${person}님 안녕하시긔?`)
+        });
+        
+        
+        const container_query = document.querySelector("#container1")
+
+        console.log(container_query);
+
+        container_query.addEventListener('dblclick', ()=>{
+            fetch('https://jsonplaceholder.typicode.com/todos/1')
+            .then(response => response.json())
+            .then(json => console.log(json))
+        })
+
+    </script>
+
+</body>
+</html>
