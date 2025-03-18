@@ -17,3 +17,7 @@ app.get('/tik', (req, res) => {
 app.get('/qwer', (req, res) => {
     res.send('asdf');
  });
+
+app.get('/alert', (req, res) => {
+    res.send(alert("!"));
+});
