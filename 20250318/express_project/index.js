@@ -1,6 +1,10 @@
 const expr = require('express') 
 const app = expr()
+app.use(expr.json());
 const PORT = 3000
+
+const cors = require('cors');
+app.use(cors())
 
 const users =  [
     {
@@ -169,14 +173,64 @@ app.get('/test', (req, res) => {
 })
 
 app.get('/user/:id', (req, res) => {
-    res.json(req.params.id)
+  let id = req.params.id;  
+  let user_len = users.length;
 
-    let id = req.params.id
-    let user_len = users.length
+  for (let i = 0; i < user_len; i++) {
+      if (users[i].id == id) {  
+          return res.json(users[i]);  
+      }
+  }
 
-    for (let i = 0; i < user_len; i++){
-        if (users[i].id == id){
-            res.json(users[i])
-        }
-    }
+  res.status(404).json({ error: "User not found" });  
+});
+
+app.get('/articles', (req, res) => {
+  return res.json(articles)
 })
+
+app.get('/articles/:id', (req, res) => {
+  let id = Number(req.params.id);  
+  let articles_len = articles.length;
+
+  for (let i = 0; i < articles_len; i++) {
+      if (articles[i].id == id) {  
+          return res.json(articles[i]);  
+      }
+  }
+
+  res.status(404).json({ error: "User not found" });  
+});
+
+app.post('/articles', (req, res) => {
+
+  let data = req.body
+
+  let lastId = articles[articles.length - 1].id
+  data["id"] = lastId + 1
+
+  const now = new Date().toISOString().slice(0, 19) + 'z';
+
+  data.date = now;
+
+  articles.push(data)
+  return res.json("ok")
+})
+
+app.delete('/articles/:id', (req, res) => {
+  const { id } = req.params;
+  
+  const articleIndex = articles.findIndex(article => article.id == id);
+  
+  if (articleIndex !== -1) {
+      articles.splice(articleIndex, 1);
+      
+      return res.json({
+          message: "Article deleted successfully"
+      });
+  } else {
+      return res.status(404).json({
+          error: "Article not found"
+      });
+  }
+});

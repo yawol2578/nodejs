@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express 서버와 연동된 프론트엔드</title>
+    <style>
+        /* 기본 스타일 설정 */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #2C3E50;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #ecf0f1;
+        }
+
+        .form-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container h2 {
+            color: #2C3E50;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .delete-button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background-color: #c0392b;
+        }
+
+        .message {
+            padding: 10px;
+            margin-top: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .success {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .error {
+            background-color: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>게시글 관리</h1>
+    
+    <div class="container">
+        <h2>사용자 목록</h2>
+        <div id="users">
+            <p>사용자 정보를 로딩 중...</p>
+        </div>
+
+        <h2>게시글 목록</h2>
+        <div id="articles">
+            <p>게시글 정보를 로딩 중...</p>
+        </div>
+
+        <div class="form-container">
+            <h2>새 게시글 작성</h2>
+            <form id="newArticleForm">
+                <input type="text" id="title" placeholder="제목" required><br>
+                <textarea id="content" placeholder="내용" rows="4" required></textarea><br>
+                <button type="submit">게시글 작성</button>
+            </form>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // 사용자 데이터 가져오기
+        async function fetchUsers() {
+            try {
+                const response = await fetch('http://localhost:3000/users');
+                const users = await response.json();
+                const usersDiv = document.getElementById('users');
+                usersDiv.innerHTML = '<table><tr><th>아이디</th><th>이름</th><th>이메일</th><th>가입일</th></tr>' +
+                    users.map(user => `<tr><td>${user.id}</td><td>${user.name}</td><td>${user.email}</td><td>${user.signup_date}</td></tr>`).join('') +
+                    '</table>';
+            } catch (error) {
+                console.error('사용자 정보를 가져오는 중 오류 발생', error);
+            }
+        }
+
+        // 게시글 데이터 가져오기
+        async function fetchArticles() {
+            try {
+                const response = await fetch('http://localhost:3000/articles');
+                const articles = await response.json();
+                const articlesDiv = document.getElementById('articles');
+                articlesDiv.innerHTML = '<table><tr><th>아이디</th><th>제목</th><th>작성자</th><th>날짜</th><th>내용</th><th>삭제</th></tr>' +
+                    articles.map(article => {
+                        const author = article.author_id; // 실제 사용자 이름을 가져오려면 수정 필요
+                        return `<tr id="article-${article.id}">
+                                    <td>${article.id}</td>
+                                    <td>${article.title}</td>
+                                    <td>${author}</td>
+                                    <td>${article.date}</td>
+                                    <td>${article.content}</td>
+                                    <td><button class="delete-button" onclick="deleteArticle(${article.id})">삭제</button></td>
+                                </tr>`;
+                    }).join('') +
+                    '</table>';
+            } catch (error) {
+                console.error('게시글 정보를 가져오는 중 오류 발생', error);
+            }
+        }
+
+        // 게시글 삭제 함수
+        async function deleteArticle(articleId) {
+            try {
+                const response = await fetch(`http://localhost:3000/articles/${articleId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message, 'success'); // 삭제 성공 메시지
+                    // 삭제된 게시글 제거
+                    const articleRow = document.getElementById(`article-${articleId}`);
+                    articleRow.remove();
+                } else {
+                    showMessage(result.error, 'error'); // 에러 메시지
+                }
+            } catch (error) {
+                console.error('게시글 삭제 중 오류 발생', error);
+            }
+        }
+
+        // 게시글 작성 폼 제출
+        document.getElementById('newArticleForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            const newArticle = {
+                title: title,
+                content: content,
+                author_id: 1 // 임시로 사용자 ID 1 (홍길동)으로 설정
+            };
+
+            try {
+                const response = await fetch('http://localhost:3000/articles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newArticle)
+                });
+
+                if (response.ok) {
+                    showMessage('게시글이 작성되었습니다!', 'success');
+                    fetchArticles(); // 게시글 목록 갱신
+                } else {
+                    showMessage('게시글 작성에 실패했습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('게시글 작성 중 오류 발생', error);
+            }
+        });
+
+        // 메시지 표시 함수
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+        }
+
+        // 페이지 로딩 시 데이터 가져오기
+        fetchUsers();
+        fetchArticles();
+    </script>
+
+</body>
+</html>
